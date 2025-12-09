@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition Image Finder</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 Face Recognition Image Finder</h1>
+            <p class="subtitle">Find all photos of yourself in large image archives using AI</p>
+        </header>
+
+        <main id="uploadSection">
+            <div class="card">
+                <h2>Upload Your Files</h2>
+                
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <!-- Step 1: ZIP File -->
+                    <div class="form-section">
+                        <label class="step-label">
+                            <span class="step-number">1</span>
+                            <span>Select ZIP Archive</span>
+                        </label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="zipFile" name="zipFile" accept=".zip" required>
+                            <label for="zipFile" class="file-label">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                <span>Choose ZIP file</span>
+                            </label>
+                            <span class="file-name" id="zipFileName">No file selected</span>
+                        </div>
+                        <p class="hint">The archive containing all images you want to search through</p>
+                    </div>
+
+                    <!-- Step 2: Reference Images -->
+                    <div class="form-section">
+                        <label class="step-label">
+                            <span class="step-number">2</span>
+                            <span>Upload Your Photos</span>
+                        </label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="refImages" name="refImages" accept="image/*" multiple required>
+                            <label for="refImages" class="file-label">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                <span>Choose photos of yourself</span>
+                            </label>
+                            <span class="file-name" id="refFileName">No files selected</span>
+                        </div>
+                        <div id="imagePreview" class="image-preview"></div>
+                        <p class="hint">Upload 3-10 clear photos of yourself for best results</p>
+                    </div>
+
+                    <!-- Step 3: Threshold -->
+                    <div class="form-section">
+                        <label class="step-label">
+                            <span class="step-number">3</span>
+                            <span>Matching Sensitivity</span>
+                        </label>
+                        <div class="threshold-control">
+                            <input type="range" id="threshold" name="threshold" min="0.20" max="0.50" step="0.05" value="0.35">
+                            <div class="threshold-labels">
+                                <span class="threshold-value">Strict (0.25)</span>
+                                <span class="threshold-value current">Balanced (<span id="thresholdValue">0.35</span>)</span>
+                                <span class="threshold-value">Lenient (0.45)</span>
+                            </div>
+                        </div>
+                        <p class="hint">Lower = fewer false matches, Higher = find more photos</p>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn-primary" id="submitBtn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 3L3 10L10 17M3 10H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Start Processing
+                    </button>
+                </form>
+            </div>
+
+            <!-- How It Works -->
+            <div class="info-section">
+                <h3>How It Works</h3>
+                <div class="steps-grid">
+                    <div class="info-step">
+                        <div class="info-icon">📦</div>
+                        <h4>Upload Archive</h4>
+                        <p>Upload your ZIP file containing all images</p>
+                    </div>
+                    <div class="info-step">
+                        <div class="info-icon">👤</div>
+                        <h4>Add Your Photos</h4>
+                        <p>Upload 3-10 clear photos of yourself</p>
+                    </div>
+                    <div class="info-step">
+                        <div class="info-icon">🤖</div>
+                        <h4>AI Processing</h4>
+                        <p>Facenet512 AI scans and matches faces</p>
+                    </div>
+                    <div class="info-step">
+                        <div class="info-icon">⬇️</div>
+                        <h4>Download Results</h4>
+                        <p>Get all matching images in a ZIP</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Processing Section -->
+        <div id="processingSection" class="hidden">
+            <div class="card">
+                <div class="processing-status">
+                    <div class="spinner"></div>
+                    <h2 id="statusTitle">Processing Your Images...</h2>
+                    <p id="statusMessage">This may take a few minutes depending on archive size</p>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressBar"></div>
+                    </div>
+                    
+                    <div class="stats">
+                        <div class="stat">
+                            <span class="stat-label">Images Scanned</span>
+                            <span class="stat-value" id="scannedCount">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Matches Found</span>
+                            <span class="stat-value highlight" id="matchCount">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="hidden">
+            <div class="card">
+                <div class="success-message">
+                    <svg class="success-icon" width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="32" r="32" fill="#10b981" opacity="0.1"/>
+                        <path d="M20 32L28 40L44 24" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h2>Processing Complete! 🎉</h2>
+                    <p>Found <strong id="totalMatches">0</strong> matching images</p>
+                    
+                    <div class="action-buttons">
+                        <a id="downloadBtn" class="btn-primary" download>
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M10 3V13M10 13L6 9M10 13L14 9M3 17H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Download Results
+                        </a>
+                        <button class="btn-secondary" onclick="location.reload()">
+                            Process Another Archive
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Powered by Facenet512 & RetinaFace | <a href="https://github.tools.sap/I762933/imag_finder" target="_blank">GitHub</a></p>
+        </footer>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

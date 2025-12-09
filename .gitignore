@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Test data and outputs
+test_data/
+test_results/
+test-results/
+reference_photos/
+my_photos_output/
+*.zip
+cancunadventures_*/
+
+# Web application runtime
+web/uploads/
+web/outputs/
+web/*.png
+web/test*.js
+web/screenshot*.js
+web/e2e*.js
+web/final*.js
+web/quick*.js
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+web/go.sum
+
+# Node
+node_modules/
+package-lock.json

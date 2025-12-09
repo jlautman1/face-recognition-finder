@@ -2,31 +2,69 @@
 
 AI-powered tool to automatically find all photos of yourself in large image archives using state-of-the-art face recognition.
 
+**Available in two modes:**
+- 🖥️ **Web UI** - Beautiful, user-friendly browser interface with real-time progress
+- ⌨️ **CLI** - Command-line interface for advanced users and automation
+
 ## ✨ Features
 
 - 🎯 **High Accuracy**: Uses Facenet512 (99.65% accuracy) with RetinaFace detector
 - 📦 **Efficient**: Processes images directly from ZIP without extraction
 - 🖼️ **Multiple References**: Use a folder of your photos for better matching
-- ⚡ **Real-time Progress**: See matches and progress as it scans
+- ⚡ **Real-time Progress**: See matches and progress as it scans (both UI and CLI)
 - 🎨 **Format Support**: JPG, PNG, BMP, GIF, TIFF, WEBP
 - 🔒 **Privacy**: Runs completely offline on your machine
 
 ## 🚀 Quick Start
 
-### Installation
+### Prerequisites
 
 ```bash
 # Clone the repository
 git clone https://github.tools.sap/I762933/imag_finder.git
 cd imag_finder
 
-# Create virtual environment and install dependencies
+# Install Python dependencies
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install deepface pillow tf-keras opencv-python
 ```
 
-### Usage
+### Option 1: Web UI (Recommended) 🖥️
+
+The easiest way to use the tool with a beautiful browser interface:
+
+```bash
+# Navigate to web directory
+cd web
+
+# Install Go dependencies (first time only)
+go mod download
+
+# Start the server
+go run main.go
+```
+
+Then open your browser to **http://localhost:8080**
+
+**Using the Web Interface:**
+1. Upload your ZIP archive containing all images
+2. Upload 3-10 clear photos of yourself as references
+3. Adjust the matching threshold if needed (default: 0.35)
+4. Click "Start Processing"
+5. Watch real-time progress with live counters and progress bar
+6. Download your matching images when complete!
+
+**Features:**
+- Real-time progress updates
+- Drag & drop file upload
+- Interactive threshold slider
+- Image previews
+- Easy one-click download
+
+### Option 2: Command Line ⌨️
+
+For advanced users or automation:
 
 **With a single reference photo:**
 ```bash
@@ -72,6 +110,8 @@ python find_my_images.py photos.zip ./reference_photos/ output_folder 0.30
 - **Face Recognition**: Facenet512 (512-dimensional embeddings)
 - **Distance Metric**: Cosine distance
 - **Framework**: DeepFace
+- **Web Backend**: Go (HTTP server with real-time status updates)
+- **Web Frontend**: HTML5, CSS3, Vanilla JavaScript
 
 ## 💡 Tips for Best Results
 
@@ -133,6 +173,39 @@ Images scanned: 1688
 Matches found: 143
 Output folder: matches/
 ============================================================
+```
+
+## 🌐 Web UI Details
+
+### Architecture
+
+The web interface consists of:
+- **Go HTTP Server** (`web/main.go`): Handles file uploads, job management, and real-time status
+- **Frontend** (`web/static/`): Clean, responsive UI with live progress updates
+- **Python Processing**: Called as subprocess with unbuffered output for real-time updates
+
+### API Endpoints
+
+- `GET /` - Main application page
+- `POST /upload` - Upload files and start processing job
+- `GET /status/:jobId` - Get real-time job status (progress, matches, scanned count)
+- `GET /download/:jobId` - Download results as ZIP
+- `GET /static/*` - Static assets (CSS, JS, images)
+
+### Configuration
+
+Edit `web/main.go` to customize:
+- Port number (default: `:8080`)
+- Upload size limits (default: 10GB)
+- Python script path
+- Temporary directories
+
+### Building for Production
+
+```bash
+cd web
+go build -o image-finder-server main.go
+./image-finder-server
 ```
 
 ## 🔧 Advanced Usage
