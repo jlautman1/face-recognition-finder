@@ -5,7 +5,11 @@ Elegant web interface for the Face Recognition Image Finder.
 ## Features
 
 - 🎨 Beautiful, modern UI
-- 📤 Drag & drop file upload
+- � Three input modes: Upload ZIP, Paste URL, Local Path
+- 🔗 Server-side URL download (WeTransfer, Google Drive, Dropbox)
+- 💻 Scan local folders or ZIPs already on the machine
+- 📱 Mobile-friendly with camera capture for reference selfies
+- 🌐 Accessible from any device on your local network
 - 👤 Multiple reference photos support
 - 🎚️ Adjustable matching threshold
 - 📊 Real-time progress tracking
@@ -31,13 +35,13 @@ go mod download
 go run main.go
 ```
 
-The server will start on `http://localhost:8080`
+The server will start on `http://0.0.0.0:8080` (accessible from other devices on your network)
 
 ### Usage
 
-1. Open `http://localhost:8080` in your browser
-2. Upload your ZIP archive
-3. Upload 3-10 photos of yourself
+1. Open `http://localhost:8080` in your browser (or `http://<your-ip>:8080` from a phone)
+2. Choose image source: Upload ZIP, Paste URL, or Local Path
+3. Upload 3-10 photos of yourself (on mobile, the front camera opens directly)
 4. Adjust the matching threshold (optional)
 5. Click "Start Processing"
 6. Wait for results and download!

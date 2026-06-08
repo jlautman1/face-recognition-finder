@@ -45,19 +45,24 @@ go mod download
 go run main.go
 ```
 
-Then open your browser to **http://localhost:8080**
+Then open your browser to **http://localhost:8080** (or **http://<your-ip>:8080** from a phone on the same WiFi)
 
 **Using the Web Interface:**
-1. Upload your ZIP archive containing all images
-2. Upload 3-10 clear photos of yourself as references
+1. Choose your image source:
+   - **Upload ZIP** — select a ZIP file from your device
+   - **Paste URL** — paste a WeTransfer, Google Drive, or direct download link (server downloads it for you — great for mobile!)
+   - **Local Path** — enter a path to a ZIP or image folder already on the computer
+2. Upload 3-10 clear photos of yourself as references (on iPhone, the front camera opens directly)
 3. Adjust the matching threshold if needed (default: 0.35)
 4. Click "Start Processing"
 5. Watch real-time progress with live counters and progress bar
 6. Download your matching images when complete!
 
 **Features:**
+- Three input modes: file upload, URL download, local path
+- Accessible from any device on your local network
 - Real-time progress updates
-- Drag & drop file upload
+- Camera capture for reference selfies on mobile
 - Interactive threshold slider
 - Image previews
 - Easy one-click download
@@ -76,6 +81,11 @@ python find_my_images.py photos.zip my_face.jpg output_folder
 python find_my_images.py photos.zip ./reference_photos/ output_folder
 ```
 
+**Scan a folder of images instead of a ZIP:**
+```bash
+python find_my_images.py /path/to/photos/ ./reference_photos/ output_folder
+```
+
 **With custom threshold:**
 ```bash
 python find_my_images.py photos.zip ./reference_photos/ output_folder 0.30
@@ -85,7 +95,7 @@ python find_my_images.py photos.zip ./reference_photos/ output_folder 0.30
 
 | Argument | Description | Required |
 |----------|-------------|----------|
-| `zip_file` | Path to ZIP archive containing images | Yes |
+| `source_path` | Path to a ZIP archive OR a folder containing images | Yes |
 | `reference_path` | Path to a reference image OR folder with multiple images | Yes |
 | `output_folder` | Folder where matching images will be saved | Yes |
 | `threshold` | Face matching threshold (0.0-1.0, default: 0.35) | No |
@@ -99,7 +109,7 @@ python find_my_images.py photos.zip ./reference_photos/ output_folder 0.30
 ## 📖 How It Works
 
 1. **Load References**: Extracts face embeddings from your reference photo(s)
-2. **Scan Archive**: Reads images directly from ZIP file
+2. **Scan Source**: Reads images from ZIP file or scans a folder recursively
 3. **Detect Faces**: Uses RetinaFace to find all faces in each image
 4. **Compare**: Calculates cosine distance between face embeddings
 5. **Match & Save**: Copies matching images to output folder
