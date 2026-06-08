@@ -13,6 +13,7 @@ test_data/
 test_results/
 test-results/
 reference_photos/
+found/
 my_photos_output/
 *.zip
 cancunadventures_*/

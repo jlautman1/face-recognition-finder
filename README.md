@@ -24,8 +24,8 @@ AI-powered tool to automatically find all photos of yourself in large image arch
 git clone https://github.tools.sap/I762933/imag_finder.git
 cd imag_finder
 
-# Install Python dependencies
-python3 -m venv venv
+# Install Python dependencies (requires Python 3.12 or lower — 3.13+ deadlocks with TensorFlow/DeepFace)
+python3.12 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install deepface pillow tf-keras opencv-python
 ```

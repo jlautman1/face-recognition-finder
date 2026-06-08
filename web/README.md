@@ -16,7 +16,7 @@ Elegant web interface for the Face Recognition Image Finder.
 ### Prerequisites
 
 - Go 1.21 or higher
-- Python 3.8+ with the main script dependencies installed
+- Python 3.8–3.12 with the main script dependencies installed (Python 3.13+ deadlocks with TensorFlow/DeepFace)
 
 ### Installation
 
