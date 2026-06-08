@@ -399,6 +399,69 @@ footer a {
     display: none !important;
 }
 
+/* Source Tabs */
+.source-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.source-tab {
+    flex: 1;
+    padding: 0.625rem 0.5rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text-light);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.source-tab:hover {
+    border-color: var(--primary);
+    color: var(--text);
+}
+
+.source-tab.active {
+    border-color: var(--primary);
+    background: #f0f3ff;
+    color: var(--primary);
+}
+
+.source-panel {
+    display: none;
+}
+
+.source-panel.active {
+    display: block;
+}
+
+.text-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.2s;
+}
+
+.text-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: white;
+}
+
+.text-input::placeholder {
+    color: var(--text-light);
+    font-size: 0.8125rem;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
     h1 {

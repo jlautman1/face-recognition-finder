@@ -18,23 +18,44 @@
                 <h2>Upload Your Files</h2>
                 
                 <form id="uploadForm" enctype="multipart/form-data">
-                    <!-- Step 1: ZIP File -->
+                    <!-- Step 1: Image Source -->
                     <div class="form-section">
                         <label class="step-label">
                             <span class="step-number">1</span>
-                            <span>Select ZIP Archive</span>
+                            <span>Image Source</span>
                         </label>
-                        <div class="file-input-wrapper">
-                            <input type="file" id="zipFile" name="zipFile" accept=".zip" required>
-                            <label for="zipFile" class="file-label">
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                    <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                </svg>
-                                <span>Choose ZIP file</span>
-                            </label>
-                            <span class="file-name" id="zipFileName">No file selected</span>
+                        <div class="source-tabs">
+                            <button type="button" class="source-tab active" data-source="upload">📁 Upload ZIP</button>
+                            <button type="button" class="source-tab" data-source="url">🔗 Paste URL</button>
+                            <button type="button" class="source-tab" data-source="local">💻 Local Path</button>
                         </div>
-                        <p class="hint">The archive containing all images you want to search through</p>
+
+                        <!-- Upload ZIP panel -->
+                        <div class="source-panel active" id="panel-upload">
+                            <div class="file-input-wrapper">
+                                <input type="file" id="zipFile" name="zipFile" accept=".zip">
+                                <label for="zipFile" class="file-label">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                    <span>Choose ZIP file</span>
+                                </label>
+                                <span class="file-name" id="zipFileName">No file selected</span>
+                            </div>
+                            <p class="hint">Upload a ZIP archive from your device</p>
+                        </div>
+
+                        <!-- URL panel -->
+                        <div class="source-panel" id="panel-url">
+                            <input type="url" id="sourceUrl" class="text-input" placeholder="https://wetransfer.com/downloads/... or Google Drive link">
+                            <p class="hint">Paste a WeTransfer, Google Drive, Dropbox, or direct download link</p>
+                        </div>
+
+                        <!-- Local path panel -->
+                        <div class="source-panel" id="panel-local">
+                            <input type="text" id="localPath" class="text-input" placeholder="/Users/you/Downloads/photos.zip or /path/to/folder/">
+                            <p class="hint">Path to a ZIP file or image folder already on this computer</p>
+                        </div>
                     </div>
 
                     <!-- Step 2: Reference Images -->
@@ -44,7 +65,7 @@
                             <span>Upload Your Photos</span>
                         </label>
                         <div class="file-input-wrapper">
-                            <input type="file" id="refImages" name="refImages" accept="image/*" multiple required>
+                            <input type="file" id="refImages" name="refImages" accept="image/*" capture="user" multiple required>
                             <label for="refImages" class="file-label">
                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                                     <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -165,7 +186,7 @@
         </div>
 
         <footer>
-            <p>Powered by Facenet512 & RetinaFace | <a href="https://github.tools.sap/I762933/imag_finder" target="_blank">GitHub</a></p>
+            <p>Powered by Facenet512 & RetinaFace | <a href="https://github.com/jlautman1/face-recognition-finder" target="_blank">GitHub</a></p>
         </footer>
     </div>
 

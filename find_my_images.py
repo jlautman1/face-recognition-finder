@@ -260,22 +260,100 @@ def scan_zip_for_faces(zip_path: str, reference_embeddings: List[np.ndarray], ou
     print("=" * 60)
 
 
+def scan_folder_for_faces(folder_path: str, reference_embeddings: List[np.ndarray], output_folder: str, threshold: float = 0.35):
+    """
+    Scan all images in a folder (recursively) and extract those containing the reference face.
+
+    Args:
+        folder_path: Path to the folder containing images
+        reference_embeddings: List of reference face embeddings
+        output_folder: Folder to save matching images
+        threshold: Face matching threshold (lower is more strict, default 0.35)
+    """
+    if not os.path.isdir(folder_path):
+        raise FileNotFoundError(f"Folder not found: {folder_path}")
+
+    os.makedirs(output_folder, exist_ok=True)
+
+    print(f"\nScanning folder: {folder_path}")
+    print(f"Output folder: {output_folder}")
+    print(f"Face matching threshold: {threshold}")
+    print("-" * 60)
+
+    # Collect all image files recursively
+    image_files = []
+    for root, _dirs, files in os.walk(folder_path):
+        for fname in sorted(files):
+            if fname.startswith('.') or fname.startswith('__MACOSX'):
+                continue
+            if is_image_file(fname):
+                image_files.append(os.path.join(root, fname))
+
+    total_files = len(image_files)
+    print(f"Found {total_files} image files to scan\n")
+
+    matches_found = 0
+    images_scanned = 0
+
+    for idx, file_path in enumerate(image_files, 1):
+        try:
+            image = Image.open(file_path)
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+            image_array = np.array(image)
+            image_array = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
+
+            images_scanned += 1
+
+            match_found, distance = compare_faces(image_array, reference_embeddings, threshold)
+
+            if match_found:
+                output_path = os.path.join(output_folder, os.path.basename(file_path))
+                if os.path.exists(output_path):
+                    base, ext = os.path.splitext(os.path.basename(file_path))
+                    counter = 1
+                    while os.path.exists(output_path):
+                        output_path = os.path.join(output_folder, f"{base}_{counter}{ext}")
+                        counter += 1
+
+                import shutil
+                shutil.copy2(file_path, output_path)
+
+                matches_found += 1
+                rel_path = os.path.relpath(file_path, folder_path)
+                print(f"[{idx}/{total_files}] ✓ MATCH (dist: {distance:.3f}): {rel_path}")
+            else:
+                if idx % 20 == 0:
+                    print(f"[{idx}/{total_files}] Scanned... ({matches_found} matches so far)")
+
+        except Exception as e:
+            print(f"[{idx}/{total_files}] ✗ Error processing {file_path}: {str(e)}")
+            continue
+
+    print("\n" + "=" * 60)
+    print("Scan complete!")
+    print(f"Images scanned: {images_scanned}")
+    print(f"Matches found: {matches_found}")
+    print(f"Output folder: {output_folder}")
+    print("=" * 60)
+
+
 def main():
     """Main function to parse arguments and run the face recognition scan."""
     if len(sys.argv) < 4:
         print(__doc__)
         print("\nError: Missing required arguments")
         print("\nUsage:")
-        print(f"  python {sys.argv[0]} <zip_file> <reference_path> <output_folder> [threshold]")
+        print(f"  python {sys.argv[0]} <source_path> <reference_path> <output_folder> [threshold]")
         print("\nArguments:")
-        print("  zip_file        : Path to the zip file containing images")
+        print("  source_path     : Path to a zip file OR a folder containing images")
         print("  reference_path  : Path to a reference image OR folder containing multiple images of yourself")
         print("  output_folder   : Folder where matching images will be saved")
         print("  threshold       : (Optional) Face matching threshold, 0.0-1.0 (default: 0.35)")
         print("                    Lower values are more strict (0.35 recommended, 0.25 very strict)")
         sys.exit(1)
     
-    zip_path = sys.argv[1]
+    source_path = sys.argv[1]
     reference_path = sys.argv[2]
     output_folder = sys.argv[3]
     threshold = float(sys.argv[4]) if len(sys.argv) > 4 else 0.35
@@ -287,8 +365,11 @@ def main():
         # Verify reference faces and extract embeddings
         valid_references, reference_embeddings = verify_reference_faces(reference_images)
         
-        # Scan zip file for matching faces
-        scan_zip_for_faces(zip_path, reference_embeddings, output_folder, threshold)
+        # Scan source for matching faces (ZIP or folder)
+        if os.path.isdir(source_path):
+            scan_folder_for_faces(source_path, reference_embeddings, output_folder, threshold)
+        else:
+            scan_zip_for_faces(source_path, reference_embeddings, output_folder, threshold)
         
     except Exception as e:
         print(f"\n✗ Error: {str(e)}")

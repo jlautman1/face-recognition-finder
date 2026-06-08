@@ -1,3 +1,16 @@
+// Source tab switching
+let activeSource = 'upload';
+
+document.querySelectorAll('.source-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.source-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.source-panel').forEach(p => p.classList.remove('active'));
+        this.classList.add('active');
+        activeSource = this.dataset.source;
+        document.getElementById('panel-' + activeSource).classList.add('active');
+    });
+});
+
 // File upload handlers
 document.getElementById('zipFile').addEventListener('change', function(e) {
     const fileName = e.target.files[0]?.name || 'No file selected';
@@ -36,10 +49,42 @@ document.getElementById('uploadForm').addEventListener('submit', async function(
     e.preventDefault();
     
     const submitBtn = document.getElementById('submitBtn');
+
+    // Validate based on active source
+    if (activeSource === 'upload') {
+        const zipFile = document.getElementById('zipFile').files[0];
+        if (!zipFile) { alert('Please select a ZIP file.'); return; }
+    } else if (activeSource === 'url') {
+        const url = document.getElementById('sourceUrl').value.trim();
+        if (!url) { alert('Please enter a download URL.'); return; }
+    } else if (activeSource === 'local') {
+        const path = document.getElementById('localPath').value.trim();
+        if (!path) { alert('Please enter a local path.'); return; }
+    }
+
+    const refFiles = document.getElementById('refImages').files;
+    if (refFiles.length === 0) { alert('Please upload at least one reference photo.'); return; }
+
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span>Uploading...</span>';
+    submitBtn.innerHTML = '<span>' + (activeSource === 'url' ? 'Submitting...' : 'Uploading...') + '</span>';
     
-    const formData = new FormData(this);
+    const formData = new FormData();
+    formData.append('sourceType', activeSource);
+    formData.append('threshold', document.getElementById('threshold').value);
+
+    // Add source-specific data
+    if (activeSource === 'upload') {
+        formData.append('zipFile', document.getElementById('zipFile').files[0]);
+    } else if (activeSource === 'url') {
+        formData.append('sourceUrl', document.getElementById('sourceUrl').value.trim());
+    } else if (activeSource === 'local') {
+        formData.append('localPath', document.getElementById('localPath').value.trim());
+    }
+
+    // Add reference images
+    for (const file of refFiles) {
+        formData.append('refImages', file);
+    }
     
     try {
         const response = await fetch('/upload', {

@@ -21,6 +21,7 @@ const (
 	uploadsDir   = "./uploads"
 	outputsDir   = "./outputs"
 	pythonScript = "../find_my_images.py"
+	maxDownloadSize = 10 << 30 // 10 GB
 )
 
 type JobStatus struct {
@@ -74,8 +75,8 @@ func main() {
 	http.HandleFunc("/download/", handleDownload)
 
 	port := ":8080"
-	log.Printf("🚀 Server starting on http://localhost%s", port)
-	log.Fatal(http.ListenAndServe(port, nil))
+	log.Printf("🚀 Server starting on http://0.0.0.0%s", port)
+	log.Fatal(http.ListenAndServe("0.0.0.0"+port, nil))
 }
 
 func handleHome(w http.ResponseWriter, r *http.Request) {
@@ -101,6 +102,11 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 		threshold = "0.35"
 	}
 
+	sourceType := r.FormValue("sourceType")
+	if sourceType == "" {
+		sourceType = "upload"
+	}
+
 	// Create job ID
 	jobID := uuid.New().String()
 	jobDir := filepath.Join(uploadsDir, jobID)
@@ -115,26 +121,68 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 		ID:        jobID,
 		Status:    "pending",
 		Progress:  0,
-		Message:   "Uploading files...",
+		Message:   "Preparing...",
 		StartTime: time.Now(),
 	}
 
-	// Save ZIP file
-	zipFile, zipHeader, err := r.FormFile("zipFile")
-	if err != nil {
-		respondError(w, "ZIP file is required", http.StatusBadRequest)
-		return
-	}
-	defer zipFile.Close()
+	// Determine image source path based on source type
+	var imagePath string
 
-	zipPath := filepath.Join(jobDir, zipHeader.Filename)
-	dst, err := os.Create(zipPath)
-	if err != nil {
-		respondError(w, "Failed to save ZIP file", http.StatusInternalServerError)
-		return
+	switch sourceType {
+	case "url":
+		sourceURL := r.FormValue("sourceUrl")
+		if sourceURL == "" {
+			respondError(w, "URL is required", http.StatusBadRequest)
+			return
+		}
+		// Download happens in background; set path now
+		imagePath = filepath.Join(jobDir, "downloaded.zip")
+		jobs[jobID].Update(func() {
+			jobs[jobID].Message = "Downloading from URL..."
+		})
+
+	case "local":
+		localPath := r.FormValue("localPath")
+		if localPath == "" {
+			respondError(w, "Local path is required", http.StatusBadRequest)
+			return
+		}
+		// Resolve to absolute path
+		absPath, err := filepath.Abs(localPath)
+		if err != nil {
+			respondError(w, "Invalid path", http.StatusBadRequest)
+			return
+		}
+		// Verify the path exists
+		info, err := os.Stat(absPath)
+		if err != nil {
+			respondError(w, fmt.Sprintf("Path not found: %s", absPath), http.StatusBadRequest)
+			return
+		}
+		// Must be a file or directory
+		if !info.IsDir() && !strings.HasSuffix(strings.ToLower(absPath), ".zip") {
+			respondError(w, "Local path must be a ZIP file or a folder of images", http.StatusBadRequest)
+			return
+		}
+		imagePath = absPath
+
+	default: // "upload"
+		zipFile, zipHeader, err := r.FormFile("zipFile")
+		if err != nil {
+			respondError(w, "ZIP file is required", http.StatusBadRequest)
+			return
+		}
+		defer zipFile.Close()
+
+		imagePath = filepath.Join(jobDir, zipHeader.Filename)
+		dst, err := os.Create(imagePath)
+		if err != nil {
+			respondError(w, "Failed to save ZIP file", http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
+		io.Copy(dst, zipFile)
 	}
-	defer dst.Close()
-	io.Copy(dst, zipFile)
 
 	// Save reference images
 	refFiles := r.MultipartForm.File["refImages"]
@@ -159,14 +207,64 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 		io.Copy(dst, file)
 	}
 
-	// Start processing in background
-	go processImages(jobID, zipPath, refDir, outputDir, threshold)
+	// For URL source, download first then process
+	if sourceType == "url" {
+		sourceURL := r.FormValue("sourceUrl")
+		go func() {
+			err := downloadFile(imagePath, sourceURL, jobs[jobID])
+			if err != nil {
+				jobs[jobID].Update(func() {
+					jobs[jobID].Status = "error"
+					jobs[jobID].Message = fmt.Sprintf("Download failed: %v", err)
+				})
+				return
+			}
+			processImages(jobID, imagePath, refDir, outputDir, threshold)
+		}()
+	} else {
+		go processImages(jobID, imagePath, refDir, outputDir, threshold)
+	}
 
 	// Return job ID
 	json.NewEncoder(w).Encode(map[string]string{
 		"job_id":  jobID,
 		"message": "Processing started",
 	})
+}
+
+func downloadFile(destPath, url string, job *JobStatus) error {
+	log.Printf("Downloading from URL: %s", url)
+	job.Update(func() {
+		job.Message = "Downloading file from URL..."
+	})
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("failed to fetch URL: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("URL returned status %d", resp.StatusCode)
+	}
+
+	out, err := os.Create(destPath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer out.Close()
+
+	// Copy with size limit
+	written, err := io.Copy(out, io.LimitReader(resp.Body, maxDownloadSize))
+	if err != nil {
+		return fmt.Errorf("download interrupted: %w", err)
+	}
+
+	log.Printf("Downloaded %d bytes to %s", written, destPath)
+	job.Update(func() {
+		job.Message = fmt.Sprintf("Downloaded %.1f MB, starting processing...", float64(written)/1024/1024)
+	})
+	return nil
 }
 
 func processImages(jobID, zipPath, refDir, outputDir, threshold string) {
